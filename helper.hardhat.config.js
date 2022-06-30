@@ -15,13 +15,14 @@ const networkConfig = {
     callbackGasLimit: "500000",
   },
 };
-const BASE_FEE = ethers.utils.parseEther("0.25");
+const BASE_FEE = 1;
 const GAS_PRICE_LINK = 1e9;
-
+const VRFCoordinatorV2MockFunding = 1e15;
 const developmentChain = ["hardhat"];
 module.exports = {
   networkConfig,
   developmentChain,
   BASE_FEE,
   GAS_PRICE_LINK,
+  VRFCoordinatorV2MockFunding,
 };

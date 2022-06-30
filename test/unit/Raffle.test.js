@@ -1,10 +1,13 @@
 const { inputToConfig } = require("@ethereum-waffle/compiler");
 const { assert } = require("chai");
 const { getNamedAccounts, deployments, ethers, network } = require("hardhat");
-const { networkConfig } = require("../../helper.hardhat.config.js");
+const {
+  networkConfig,
+  developmentChain,
+} = require("../../helper.hardhat.config.js");
 
 describe("constants", function () {
-  let rottery, VRFCoordinatorV2Mock;
+  let rottery, VRFCoordinatorV2Mock, accounts;
   const chainId = network.config.chainId;
 
   beforeEach(async function () {
@@ -16,13 +19,14 @@ describe("constants", function () {
       }[envName];
     }
     if (isLocalEnv(network.name)) {
-      await deployments.fixture("Rottery");
+      await deployments.fixture(["all"]);
     }
+    accounts = await ethers.getSigners();
     rottery = await ethers.getContract("Rottery", deployer);
-    // VRFCoordinatorV2Mock = await ethers.getContract(
-    //   "VRFCoordinatorV2Mock",
-    //   deployer
-    // );
+    VRFCoordinatorV2Mock = await ethers.getContract(
+      "VRFCoordinatorV2Mock",
+      deployer
+    );
   });
 
   describe("constructor", async function () {
@@ -60,8 +64,30 @@ describe("constants", function () {
       const requestId = await requestRandomWordsRecipt.events[1].args
         .s_requestId;
       console.log(`requested Id is ${requestId.toString()}`);
+      console.log(`Running on ${network.name}`);
+
+      const additionalEntrances = 3;
+      const startingIndex = 1;
+      for (
+        let i = startingIndex;
+        i < additionalEntrances + startingIndex;
+        i++
+      ) {
+        rotteryNonDeployer = rottery.connect(accounts[i]);
+        await rottery.enterRaffle();
+      }
+      if (developmentChain.includes(network.name)) {
+        await VRFCoordinatorV2Mock.fulfillRandomWords(
+          requestId,
+          rottery.address
+        );
+      }
       const RandomNumberArray = await rottery.getRandomWords();
-      console.log(RandomNumberArray.toString());
+      console.log(`Random number is : ${RandomNumberArray.toString()}`);
+      const numberOfPlayers = await rottery.getnumberOfPlayer();
+      console.log(`Number of Players : ${numberOfPlayers}`);
+      const Winner = await rottery.getWinner();
+      console.log(`Winner : ${Winner}`);
     });
   });
 });

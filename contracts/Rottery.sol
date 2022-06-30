@@ -11,8 +11,11 @@ contract Rottery is VRFConsumerBaseV2 {
     uint32 private immutable i_callbackGasLimit;
     uint16 private constant i_requestConfirmations = 3;
     uint32 private constant i_numWords = 1;
-    uint256 public s_requestId;
-    uint256[] public s_randomWords;
+    uint256 private s_requestId;
+    uint256[] private s_randomWords;
+    address payable private s_winner;
+    uint256 private numberOfPlayer;
+    address payable[] private s_players;
 
     event RequestRandomWords(uint256 indexed s_requestId);
 
@@ -26,6 +29,10 @@ contract Rottery is VRFConsumerBaseV2 {
         i_subscriptionId = subscriptionId;
         i_callbackGasLimit = callbackGasLimit;
         i_COORDINATOR = VRFCoordinatorV2Interface(VRFCoordinator);
+    }
+
+    function enterRaffle() public payable {
+        s_players.push(payable(msg.sender));
     }
 
     function requestRandomWords() external {
@@ -44,6 +51,11 @@ contract Rottery is VRFConsumerBaseV2 {
         override
     {
         s_randomWords = randomWords;
+        numberOfPlayer = s_players.length;
+        uint256 winnerIndex = randomWords[0] % numberOfPlayer;
+        s_winner = s_players[winnerIndex];
+
+        s_players = new address payable[](0);
     }
 
     function getGasLane() public view returns (bytes32) {
@@ -68,5 +80,13 @@ contract Rottery is VRFConsumerBaseV2 {
 
     function getRandomWords() public view returns (uint256[] memory) {
         return s_randomWords;
+    }
+
+    function getWinner() public view returns (address) {
+        return s_winner;
+    }
+
+    function getnumberOfPlayer() public view returns (uint256) {
+        return numberOfPlayer;
     }
 }
